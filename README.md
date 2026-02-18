@@ -1,4 +1,10 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+### 用 vibe-coding 开发 vibe-leading
+
+Develop with vibe coding, manage with vibe leading.
+
+### 碳硅混合
+
+👨‍💻 🤖 👨‍💼 🤖 👩‍💼 🤖 👩‍🔬 🤖 👨‍🔬 🤖 🧑‍🏫  🤖 👩‍🏫 🤖 👨‍🏫 🤖 🧑‍🎨 🤖 🧑‍🎨 🤖 🧑‍💻
 
 ## Getting Started
 
