@@ -8,9 +8,11 @@ authors = [
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "crewai[google-genai,tools]==1.9.3",
+    "fastapi>=0.129.0",
 ]
 
 [project.scripts]
+start = "agent.main:start"
 agent = "agent.main:run"
 run_crew = "agent.main:run"
 train = "agent.main:train"

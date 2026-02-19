@@ -5,6 +5,7 @@ import warnings
 from datetime import datetime
 
 from agent.crew import VibeLeadingCrew
+from agent.server import start_server
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 
@@ -12,6 +13,13 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 # crew locally, so refrain from adding unnecessary logic into this file.
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
+
+def start():
+    """
+    Start the server.
+    """
+    start_server()
+
 
 def run():
     """
