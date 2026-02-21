@@ -1,15 +1,22 @@
+import { HttpAgent } from '@ag-ui/client';
+
 import {
   CopilotRuntime,
-  GoogleGenerativeAIAdapter,
+  ExperimentalEmptyAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
 } from '@copilotkit/runtime';
 
 import { NextRequest } from 'next/server';
 
-const serviceAdapter = new GoogleGenerativeAIAdapter({
-  model: process.env.GOOGLE_GENERATIVE_AI_MODEL || 'gemini-2.5-flash',
+const serviceAdapter = new ExperimentalEmptyAdapter();
+const runtime = new CopilotRuntime({
+  agents: {
+    // @ts-ignore
+    default: new HttpAgent({
+      url: `${process.env.HTTP_AGENT_URL_BASE}/`,
+    }),
+  },
 });
-const runtime = new CopilotRuntime();
 
 export const POST = async (req: NextRequest) => {
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
