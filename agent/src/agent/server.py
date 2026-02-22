@@ -10,6 +10,9 @@ from crewai.events import (
     CrewKickoffStartedEvent,
     CrewKickoffCompletedEvent,
     CrewKickoffFailedEvent,
+    AgentExecutionStartedEvent,
+    AgentExecutionCompletedEvent,
+    AgentExecutionErrorEvent,
 )
 from crewai.events import BaseEventListener
 
@@ -77,6 +80,18 @@ class AGUICrewAIEventListener(BaseEventListener):
         @crewai_event_bus.on(CrewKickoffFailedEvent)
         def _(source, event):
             self._dispatch(source, RunErrorEvent(message=event.error))
+
+        @crewai_event_bus.on(AgentExecutionStartedEvent)
+        def _(source, event):
+            pass
+
+        @crewai_event_bus.on(AgentExecutionCompletedEvent)
+        def _(source, event):
+            pass
+
+        @crewai_event_bus.on(AgentExecutionErrorEvent)
+        def _(source, event):
+            pass
 
 
 load_dotenv()
