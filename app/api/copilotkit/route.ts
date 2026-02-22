@@ -13,7 +13,7 @@ const runtime = new CopilotRuntime({
   agents: {
     // @ts-ignore
     default: new HttpAgent({
-      url: `${process.env.HTTP_AGENT_URL_BASE}/`,
+      url: `${process.env.HTTP_AGENT_URL_BASE}/agent`,
     }),
   },
 });

@@ -99,14 +99,49 @@ app = FastAPI()
 ag_ui_crewai_event_listener = AGUICrewAIEventListener()
 
 
-@app.post('/')
-async def agui_endpoint(client_input: RunAgentInput, request: Request):
-    """AG-UI protocol endpoint"""
+@app.post('/agent')
+async def agui_endpoint_agent(client_input: RunAgentInput, request: Request):
+    """AG-UI protocol endpoint for single agent"""
 
-    # Get the accept header from the request
-    accept_header = request.headers.get("accept")
-    # Create an event encoder to properly format SSE events
-    agui_encoder = EventEncoder(accept=accept_header)
+    agui_encoder = _create_agui_encoder(request)
+
+    async def event_generator():
+        researcher = VibeLeadingCrew().researcher()
+
+        try:
+            yield agui_encoder.encode(
+                RunStartedEvent(thread_id=client_input.thread_id, run_id=client_input.run_id)
+            )
+
+            output = await researcher.akickoff(
+                [
+                    {
+                        'role': message.role,
+                        'content': message.content,
+                    }
+                    for message in client_input.messages
+                ]
+            )
+
+            yield agui_encoder.encode(TextMessageStartEvent(message_id=client_input.run_id))
+            yield agui_encoder.encode(TextMessageContentEvent(message_id=client_input.run_id, delta=output.raw))
+            yield agui_encoder.encode(TextMessageEndEvent(message_id=client_input.run_id))
+
+            yield agui_encoder.encode(
+                RunFinishedEvent(thread_id=client_input.thread_id, run_id=client_input.run_id)
+            )
+
+        except Exception as e:
+            yield agui_encoder.encode(RunErrorEvent(message=str(e)))
+
+    return _create_agui_response(event_generator, agui_encoder)
+
+
+@app.post('/crew')
+async def agui_endpoint_crew(client_input: RunAgentInput, request: Request):
+    """AG-UI protocol endpoint for crew"""
+
+    agui_encoder = _create_agui_encoder(request)
 
     inputs = {
         **client_input.state,
@@ -145,7 +180,15 @@ async def agui_endpoint(client_input: RunAgentInput, request: Request):
         finally:
             ag_ui_crewai_event_listener.remove(crew)
 
-    return StreamingResponse(event_generator(), media_type=agui_encoder.get_content_type())
+    return _create_agui_response(event_generator, agui_encoder)
+
+
+def _create_agui_encoder(request: Request):
+    accept_header = request.headers.get("accept")
+    return EventEncoder(accept=accept_header)
+
+def _create_agui_response(generator, agui_encoder):
+    return StreamingResponse(generator(), media_type=agui_encoder.get_content_type())
 
 
 def start_server():
