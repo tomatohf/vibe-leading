@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1771817887133,
+      "tag": "0000_fair_the_phantom",
+      "breakpoints": true
+    }
+  ]
+}
