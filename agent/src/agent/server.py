@@ -2,10 +2,12 @@
 import os
 from dotenv import load_dotenv
 import asyncio
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 import uvicorn
+from sqlmodel import Session
 
+from crewai import Agent
 from crewai.events import (
     CrewKickoffStartedEvent,
     CrewKickoffCompletedEvent,
@@ -29,6 +31,8 @@ from ag_ui.core import (
 from ag_ui.encoder import EventEncoder
 
 from agent.crew import VibeLeadingCrew
+from agent.db import get_db
+from agent.db.agents import get_agent_by_id
 
 
 class AGUICrewAIEventListener(BaseEventListener):
@@ -100,20 +104,32 @@ ag_ui_crewai_event_listener = AGUICrewAIEventListener()
 
 
 @app.post('/agent/{agent_id}')
-async def agui_endpoint_agent(agent_id: str, client_input: RunAgentInput, request: Request):
+async def agui_endpoint_agent(
+    agent_id: str,
+    client_input: RunAgentInput,
+    request: Request,
+    db: Session = Depends(get_db)):
     """AG-UI protocol endpoint for single agent"""
 
     agui_encoder = _create_agui_encoder(request)
 
+    agent_model = get_agent_by_id(db, agent_id)
+    if not agent_model:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
     async def event_generator():
-        researcher = VibeLeadingCrew().researcher()
+        agent = Agent(
+            role=agent_model.role,
+            goal=agent_model.goal,
+            backstory=agent_model.backstory,
+        )
 
         try:
             yield agui_encoder.encode(
                 RunStartedEvent(thread_id=client_input.thread_id, run_id=client_input.run_id)
             )
 
-            output = await researcher.akickoff(
+            output = await agent.akickoff(
                 [
                     {
                         'role': message.role,
