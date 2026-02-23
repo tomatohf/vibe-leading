@@ -10,9 +10,6 @@ export default function MsgPage() {
       <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
         消息列表与对话入口将在此展示。
       </p>
-      <ul className="mt-4 list-inside list-disc text-sm text-zinc-600 dark:text-zinc-300">
-        <li><a href="/chat" className="underline">AI 对话</a>（CopilotKit）</li>
-      </ul>
     </div>
   );
 }

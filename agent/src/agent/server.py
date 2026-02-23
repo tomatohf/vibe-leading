@@ -99,8 +99,8 @@ app = FastAPI()
 ag_ui_crewai_event_listener = AGUICrewAIEventListener()
 
 
-@app.post('/agent')
-async def agui_endpoint_agent(client_input: RunAgentInput, request: Request):
+@app.post('/agent/{agent_id}')
+async def agui_endpoint_agent(agent_id: str, client_input: RunAgentInput, request: Request):
     """AG-UI protocol endpoint for single agent"""
 
     agui_encoder = _create_agui_encoder(request)
@@ -137,8 +137,8 @@ async def agui_endpoint_agent(client_input: RunAgentInput, request: Request):
     return _create_agui_response(event_generator, agui_encoder)
 
 
-@app.post('/crew')
-async def agui_endpoint_crew(client_input: RunAgentInput, request: Request):
+@app.post('/crew/{crew_id}')
+async def agui_endpoint_crew(crew_id: str, client_input: RunAgentInput, request: Request):
     """AG-UI protocol endpoint for crew"""
 
     agui_encoder = _create_agui_encoder(request)
