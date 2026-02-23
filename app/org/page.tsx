@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type JSX } from "react";
+import Link from "next/link";
 
 
 type Agent = {
@@ -260,6 +261,12 @@ export default function OrgPage() {
                     >
                       删除
                     </button>
+                    <Link
+                      href={`/msg/agent/${agent.id}`}
+                      className="rounded-md border border-zinc-200 px-2 py-1 text-[11px] text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    >
+                      消息
+                    </Link>
                   </div>
                 </div>
                 <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-zinc-500 dark:text-zinc-400">
