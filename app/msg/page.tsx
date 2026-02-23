@@ -3,7 +3,7 @@ export const metadata = {
   description: "消息与对话",
 };
 
-export default function MessagesPage() {
+export default function MsgPage() {
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
       <h1 className="text-xl font-semibold text-foreground">消息</h1>

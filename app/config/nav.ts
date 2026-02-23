@@ -4,9 +4,9 @@
  */
 export const BOTTOM_NAV_ITEMS = [
   {
-    key: "messages",
+    key: "msg",
     label: "消息",
-    href: "/messages",
+    href: "/msg",
     icon: "message",
   },
   {
@@ -31,7 +31,7 @@ export const BOTTOM_NAV_ITEMS = [
 
 /** 根据 pathname 判断是否属于某模块（用于高亮当前 tab） */
 export function getActiveNavKey(pathname: string): string | null {
-  if (pathname.startsWith("/messages")) return "messages";
+  if (pathname.startsWith("/msg")) return "msg";
   if (pathname.startsWith("/tasks")) return "tasks";
   if (pathname.startsWith("/org")) return "org";
   if (pathname.startsWith("/me")) return "me";
