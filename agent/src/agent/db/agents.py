@@ -16,9 +16,6 @@ class Agent(SQLModel, table=True):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True  # 兼容ORM查询
-
 
 def get_agent_by_id(db: Session, agent_id: str) -> Optional[Agent]:
     statement = select(Agent).where(Agent.id == agent_id)
