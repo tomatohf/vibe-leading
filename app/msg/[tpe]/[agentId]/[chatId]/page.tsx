@@ -9,18 +9,19 @@ import { useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core
 interface Params {
   // 动态路由参数都是字符串类型
   tpe: string;
-  id: string;
+  agentId: string;
+  chatId: string;
 }
 
 export default function ChatPage({ params }: { params: Promise<Params> }) {
-  const { tpe, id } = React.use(params);
+  const { tpe, agentId, chatId } = React.use(params);
 
   return (
     <CopilotKit
-      runtimeUrl={`/api/copilotkit/${tpe}/${id}`}
+      runtimeUrl={`/api/copilotkit/${tpe}/${agentId}`}
       enableInspector={false}
     >
-      <Chat tpe={tpe} id={id} />
+      <Chat tpe={tpe} id={agentId} />
     </CopilotKit>
   );
 }
