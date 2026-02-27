@@ -1,4 +1,10 @@
-import { mysqlTable, varchar, timestamp } from "drizzle-orm/mysql-core";
+import {
+  mysqlTable,
+  varchar,
+  timestamp,
+  mysqlEnum,
+  json,
+} from "drizzle-orm/mysql-core";
 
 /**
  * 业务表：agents
@@ -27,3 +33,28 @@ export const agents = mysqlTable("agents", {
 
 export type Agent = typeof agents.$inferSelect;
 export type NewAgent = typeof agents.$inferInsert;
+
+/**
+ * 业务表：chats
+ * - tpe：类型枚举
+ * - robotId：关联的 robot（UUID）
+ * - messages：消息列表（JSON 数组）
+ */
+export const chatTpeEnum = ["agent", "crew"] as const;
+
+export const chats = mysqlTable("chats", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+
+  tpe: mysqlEnum("tpe", chatTpeEnum).notNull(),
+  robotId: varchar("robot_id", { length: 36 }).notNull(),
+  messages: json("messages").$type<unknown[]>().notNull(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type Chat = typeof chats.$inferSelect;
+export type NewChat = typeof chats.$inferInsert;
