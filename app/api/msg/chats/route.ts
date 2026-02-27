@@ -1,7 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { chats, chatTpeEnum } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const tpe = searchParams.get("tpe");
+    const robotId = searchParams.get("robotId");
+
+    if (
+      !tpe ||
+      !chatTpeEnum.includes(tpe as (typeof chatTpeEnum)[number])
+    ) {
+      return NextResponse.json(
+        { ok: false, error: "tpe 必填且须为 agent 或 crew" },
+        { status: 400 }
+      );
+    }
+
+    if (!robotId) {
+      return NextResponse.json(
+        { ok: false, error: "robotId 必填" },
+        { status: 400 }
+      );
+    }
+
+    const list = await db
+      .select({
+        id: chats.id,
+        messages: chats.messages,
+        updatedAt: chats.updatedAt,
+      })
+      .from(chats)
+      .where(
+        and(eq(chats.tpe, tpe as (typeof chatTpeEnum)[number]), eq(chats.robotId, robotId))
+      )
+      .orderBy(desc(chats.updatedAt));
+
+    return NextResponse.json({ ok: true, data: list });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
