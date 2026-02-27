@@ -49,41 +49,38 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
 
   useEffect(() => {
     if (!chatId) return;
-    let cancelled = false;
     fetch(`/api/msg/chats/${chatId}`)
       .then((res) => res.json())
       .then((json) => {
-        if (!cancelled && json?.ok && json?.data) {
-          setChat(json.data as Chat);
-        } else {
-          setChat(null);
+        if (json?.ok && json?.data) {
+          const chatData = json.data as Chat;
+          if (chatData.tpe !== tpe || chatData.robotId !== robotId) {
+            setChat(null);
+          } else {
+            setChat(chatData);
+            fetch(`/api/org/agents/${robotId}`)
+              .then((res) => res.json())
+              .then((robotJson) => {
+                if (robotJson?.ok && robotJson?.data) {
+                  setRobot({
+                    tpe,
+                    id: robotId,
+                    name: robotJson.data.role,
+                  });
+                }
+              });
+          }
         }
-      })
-      .catch(() => {
-        if (!cancelled) setChat(null);
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [chatId]);
+  }, [chatId, tpe, robotId]);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/org/agents/${robotId}`)
-      .then((res) => res.json())
-      .then((json) => {
-        if (!cancelled && json?.ok && json?.data) {
-          setRobot({
-            tpe,
-            id: robotId,
-            name: json.data.role,
-          });
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [tpe, robotId]);
+  if (!chat) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
+        未找到该会话
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
