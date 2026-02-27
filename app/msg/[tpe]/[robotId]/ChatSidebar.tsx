@@ -5,12 +5,12 @@ import { usePathname } from "next/navigation";
 
 interface ChatSidebarProps {
   tpe: string;
-  agentId: string;
+  robotId: string;
 }
 
-export function ChatSidebar({ tpe, agentId }: ChatSidebarProps) {
+export function ChatSidebar({ tpe, robotId }: ChatSidebarProps) {
   const pathname = usePathname();
-  const baseHref = `/msg/${tpe}/${agentId}`;
+  const baseHref = `/msg/${tpe}/${robotId}`;
   const isNewChat = pathname === baseHref;
 
   return (

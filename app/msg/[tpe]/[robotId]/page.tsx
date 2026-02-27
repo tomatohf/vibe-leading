@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 interface Params {
   tpe: string;
-  agentId: string;
+  robotId: string;
 }
 
 type Agent = { role: string; goal: string; backstory: string };
@@ -16,7 +16,7 @@ export default function NewChatPage({
 }: {
   params: Promise<Params>;
 }) {
-  const { tpe, agentId } = React.use(params);
+  const { tpe, robotId } = React.use(params);
   const router = useRouter();
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function NewChatPage({
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/org/agents/${agentId}`)
+    fetch(`/api/org/agents/${robotId}`)
       .then((res) => res.json())
       .then((json) => {
         if (!cancelled && json?.ok && json?.data) {
@@ -41,14 +41,14 @@ export default function NewChatPage({
     return () => {
       cancelled = true;
     };
-  }, [agentId]);
+  }, [robotId]);
 
   function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     const trimmed = input.trim();
     if (!trimmed) return;
     const chatId = crypto.randomUUID();
-    router.push(`/msg/${tpe}/${agentId}/${chatId}`);
+    router.push(`/msg/${tpe}/${robotId}/${chatId}`);
   }
 
   if (loading) {
