@@ -7,6 +7,7 @@ import "@copilotkit/react-ui/styles.css";
 import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotChat } from "@copilotkit/react-ui";
 import { useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core/v2";
+import type { Chat } from "@/lib/db/schema";
 
 interface Params {
   tpe: string;
@@ -14,7 +15,12 @@ interface Params {
   chatId: string;
 }
 
-type Robot = { name: string };
+type Robot = {
+  tpe: string;
+  id: string;
+
+  name: string;
+};
 
 function NewChatIcon() {
   return (
@@ -38,7 +44,28 @@ function NewChatIcon() {
 
 export default function ChatPage({ params }: { params: Promise<Params> }) {
   const { tpe, robotId, chatId } = React.use(params);
+  const [chat, setChat] = useState<Chat | null>(null);
   const [robot, setRobot] = useState<Robot | null>(null);
+
+  useEffect(() => {
+    if (!chatId) return;
+    let cancelled = false;
+    fetch(`/api/msg/chats/${chatId}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled && json?.ok && json?.data) {
+          setChat(json.data as Chat);
+        } else {
+          setChat(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setChat(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [chatId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +74,8 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
       .then((json) => {
         if (!cancelled && json?.ok && json?.data) {
           setRobot({
+            tpe,
+            id: robotId,
             name: json.data.role,
           });
         }
@@ -54,7 +83,7 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
     return () => {
       cancelled = true;
     };
-  }, [robotId]);
+  }, [tpe, robotId]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -79,14 +108,17 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
         enableInspector={false}
       >
         <div className="flex min-h-0 flex-1 flex-col">
-          <Chat tpe={tpe} robotId={robotId} robot={robot} />
+          <Chat robot={robot} chat={chat} />
         </div>
       </CopilotKit>
     </div>
   );
 }
 
-function Chat({ tpe, robotId, robot }: { tpe: string; robotId: string; robot: Robot | null }) {
+function Chat({robot, chat}: {
+  robot: Robot | null;
+  chat: Chat | null;
+}) {
   const { agent } = useAgent();
 
   function onNewMessage(params: { message: Message } & AgentSubscriberParams) {
@@ -105,8 +137,8 @@ function Chat({ tpe, robotId, robot }: { tpe: string; robotId: string; robot: Ro
     <CopilotChat
       className="flex flex-1 min-h-0 flex-col h-full [&_.copilotKitMessages]:flex-1 [&_.copilotKitMessages]:min-h-0 [&_.copilotKitMessages]:overflow-auto"
       labels={{
-        title: robot?.name ?? `${tpe} ${robotId}`,
-        placeholder: robot ? `给 ${robot.name} 发送消息` : `给 ${tpe} 发送消息`,
+        title: robot?.name,
+        placeholder: robot ? `给 ${robot.name} 发送消息` : `发送消息`,
       }}
     />
   );
