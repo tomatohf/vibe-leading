@@ -21,7 +21,9 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
       runtimeUrl={`/api/copilotkit/${tpe}/${agentId}`}
       enableInspector={false}
     >
-      <Chat tpe={tpe} id={agentId} />
+      <div className="flex h-full min-h-0 flex-col">
+        <Chat tpe={tpe} id={agentId} />
+      </div>
     </CopilotKit>
   );
 }
