@@ -1,20 +1,39 @@
 'use client'
 
 import React from "react";
+import { useEffect, useState } from "react";
 import "@copilotkit/react-ui/styles.css";
 import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotChat } from "@copilotkit/react-ui";
 import { useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core/v2";
 
 interface Params {
-  // 动态路由参数都是字符串类型
   tpe: string;
   robotId: string;
   chatId: string;
 }
 
+type Robot = { name: string };
+
 export default function ChatPage({ params }: { params: Promise<Params> }) {
   const { tpe, robotId, chatId } = React.use(params);
+  const [robot, setRobot] = useState<Robot | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/org/agents/${robotId}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled && json?.ok && json?.data) {
+          setRobot({
+            name: json.data.role,
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [robotId]);
 
   return (
     <CopilotKit
@@ -22,13 +41,13 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
       enableInspector={false}
     >
       <div className="flex h-full min-h-0 flex-col">
-        <Chat tpe={tpe} robotId={robotId} />
+        <Chat tpe={tpe} robotId={robotId} robot={robot} />
       </div>
     </CopilotKit>
   );
 }
 
-function Chat({ tpe }: { tpe: string; robotId: string }) {
+function Chat({ tpe, robotId, robot }: { tpe: string; robotId: string; robot: Robot | null }) {
   const { agent } = useAgent();
 
   function onNewMessage(params: { message: Message } & AgentSubscriberParams) {
@@ -46,7 +65,8 @@ function Chat({ tpe }: { tpe: string; robotId: string }) {
   return (
     <CopilotChat
       labels={{
-        placeholder: `给 ${tpe} 发送消息`,
+        title: robot?.name ?? `${tpe} ${robotId}`,
+        placeholder: robot ? `给 ${robot.name} 发送消息` : `给 ${tpe} 发送消息`,
       }}
     />
   );
