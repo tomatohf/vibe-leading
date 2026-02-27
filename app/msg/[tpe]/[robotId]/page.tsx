@@ -21,6 +21,8 @@ export default function NewChatPage({
   const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,12 +45,32 @@ export default function NewChatPage({
     };
   }, [robotId]);
 
-  function handleSubmit(e: { preventDefault(): void }) {
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
-    const chatId = crypto.randomUUID();
-    router.push(`/msg/${tpe}/${robotId}/${chatId}`);
+    if (!trimmed || submitting) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/msg/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tpe,
+          robotId,
+          messages: [{ role: "user", content: trimmed }],
+        }),
+      });
+      const json = await res.json();
+      if (!json?.ok || !json?.data?.id) {
+        setError(json?.error ?? "创建会话失败");
+        return;
+      }
+      const chatId = json.data.id;
+      router.push(`/msg/${tpe}/${robotId}/${chatId}`);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (loading) {
@@ -84,11 +106,19 @@ export default function NewChatPage({
         <p className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
           在下方输入消息开始与 {agent.role} 对话
         </p>
+        {error && (
+          <p className="mt-4 text-center text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        )}
         <div className="mt-8">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                setError(null);
+              }}
               placeholder={`给 ${agent.role} 发送消息…`}
               rows={3}
               className="min-h-[44px] flex-1 resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500 dark:focus:border-zinc-600 dark:focus:ring-zinc-800"
@@ -101,10 +131,10 @@ export default function NewChatPage({
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || submitting}
               className="shrink-0 self-center rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 disabled:pointer-events-none dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              发送
+              {submitting ? "发送中…" : "发送"}
             </button>
           </form>
         </div>
