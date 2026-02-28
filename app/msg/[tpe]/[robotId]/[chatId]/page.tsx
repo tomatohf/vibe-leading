@@ -3,10 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import "@copilotkit/react-ui/styles.css";
+import "@copilotkit/react-core/v2/styles.css";
 import { CopilotKit } from "@copilotkit/react-core";
-import { CopilotChat } from "@copilotkit/react-ui";
-import { useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core/v2";
+import { CopilotChat, useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core/v2";
 import type { Chat } from "@/lib/db/schema";
 
 interface Params {
@@ -118,24 +117,26 @@ function Chat({robot, chat}: {
 }) {
   const { agent } = useAgent();
 
-  function onNewMessage(params: { message: Message } & AgentSubscriberParams) {
-    const threadId = agent.threadId;
-    const messages = params.messages;
-  }
-
   React.useEffect(() => {
     const { unsubscribe } = agent.subscribe({
-      onNewMessage,
+      onNewMessage(params: { message: Message } & AgentSubscriberParams) {
+        void agent.threadId;
+        void params.messages;
+      },
     });
     return unsubscribe;
-  });
+  }, [agent]);
 
   return (
     <CopilotChat
-      className="flex flex-1 min-h-0 flex-col h-full [&_.copilotKitMessages]:flex-1 [&_.copilotKitMessages]:min-h-0 [&_.copilotKitMessages]:overflow-auto"
+      threadId={chat?.id}
       labels={{
-        title: robot?.name,
-        placeholder: robot ? `给 ${robot.name} 发送消息` : `发送消息`,
+        modalHeaderTitle: robot?.name,
+        chatInputPlaceholder: robot ? `给 ${robot.name} 发送消息` : "发送消息",
+        userMessageToolbarCopyMessageLabel: "复制",
+        assistantMessageToolbarCopyMessageLabel: "复制",
+        chatDisclaimerText: "",
+        welcomeMessageText: ""
       }}
     />
   );
