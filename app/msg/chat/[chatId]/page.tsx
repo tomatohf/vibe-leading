@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import "@copilotkit/react-core/v2/styles.css";
 import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotChat, useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core/v2";
@@ -43,18 +44,39 @@ function NewChatIcon() {
 export default function ChatPageInLayout({ params }: { params: Promise<Params> }) {
   const { chatId } = React.use(params);
   const [chat, setChat] = useState<Chat | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId) {
+      queueMicrotask(() => setLoading(false));
+      return;
+    }
+
+    let cancelled = false;
     fetch(`/api/msg/chats/${chatId}`)
       .then((res) => res.json())
       .then((json) => {
-        if (json?.ok && json?.data) {
+        if (!cancelled && json?.ok && json?.data) {
           const chatData = json.data as Chat;
           setChat(chatData);
         }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [chatId]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+        <Loader2 className="size-8 animate-spin" aria-hidden />
+        <span>加载中…</span>
+      </div>
+    );
+  }
 
   if (!chat) {
     return (

@@ -3,6 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import ChatLayout from '@/app/msg/chat/ChatLayout'
 
 interface Params {
@@ -75,8 +76,9 @@ export default function NewChatPage({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen w-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
-        加载中…
+      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
+        <Loader2 className="size-8 animate-spin" aria-hidden />
+        <span>加载中…</span>
       </div>
     );
   }
