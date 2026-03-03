@@ -7,6 +7,7 @@ import {
 } from '@copilotkit/runtime';
 
 import { NextRequest } from 'next/server';
+import { DBAgentRunner } from './db-agent-runner';
 
 
 type RouteParams = {
@@ -22,11 +23,12 @@ export const POST = async (req: NextRequest, { params }: RouteParams) => {
   const { tpe, id } = await params;
   const runtime = new CopilotRuntime({
     agents: {
-      // @ts-ignore
+      // @ts-expect-error(ignore)
       default: new HttpAgent({
         url: `${process.env.HTTP_AGENT_URL_BASE}/${tpe}/${id}`,
       }),
     },
+    runner: new DBAgentRunner(),
   });
 
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
