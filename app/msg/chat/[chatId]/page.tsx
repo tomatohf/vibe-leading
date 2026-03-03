@@ -6,11 +6,10 @@ import { useEffect, useState } from "react";
 import "@copilotkit/react-core/v2/styles.css";
 import { CopilotKit } from "@copilotkit/react-core";
 import { CopilotChat, useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core/v2";
+import ChatLayout from '@/app/msg/chat/ChatLayout'
 import type { Chat } from "@/lib/db/schema";
 
 interface Params {
-  tpe: string;
-  robotId: string;
   chatId: string;
 }
 
@@ -41,10 +40,9 @@ function NewChatIcon() {
   );
 }
 
-export default function ChatPage({ params }: { params: Promise<Params> }) {
-  const { tpe, robotId, chatId } = React.use(params);
+export default function ChatPageInLayout({ params }: { params: Promise<Params> }) {
+  const { chatId } = React.use(params);
   const [chat, setChat] = useState<Chat | null>(null);
-  const [robot, setRobot] = useState<Robot | null>(null);
 
   useEffect(() => {
     if (!chatId) return;
@@ -53,40 +51,51 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
       .then((json) => {
         if (json?.ok && json?.data) {
           const chatData = json.data as Chat;
-          if (chatData.tpe !== tpe || chatData.robotId !== robotId) {
-            setChat(null);
-          } else {
-            setChat(chatData);
-            fetch(`/api/org/agents/${robotId}`)
-              .then((res) => res.json())
-              .then((robotJson) => {
-                if (robotJson?.ok && robotJson?.data) {
-                  setRobot({
-                    tpe,
-                    id: robotId,
-                    name: robotJson.data.role,
-                  });
-                }
-              });
-          }
+          setChat(chatData);
         }
       });
-  }, [chatId, tpe, robotId]);
+  }, [chatId]);
 
   if (!chat) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="flex min-h-screen w-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
         未找到该会话
       </div>
     );
   }
 
   return (
+    <ChatLayout params={{ tpe: chat.tpe, robotId: chat.robotId }}>
+      <ChatPage chat={chat} />
+    </ChatLayout>
+  );
+}
+
+function ChatPage({ chat }: { chat: Chat }) {
+  const [robot, setRobot] = useState<Robot | null>(null);
+
+  useEffect(() => {
+    if (!chat) return;
+
+    fetch(`/api/org/agents/${chat.robotId}`)
+      .then((res) => res.json())
+      .then((robotJson) => {
+        if (robotJson?.ok && robotJson?.data) {
+          setRobot({
+            tpe: chat.tpe,
+            id: chat.robotId,
+            name: robotJson.data.role,
+          });
+        }
+      });
+  }, [chat]);
+
+  return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex shrink-0 items-center justify-between border-b border-zinc-200 bg-background px-4 py-3 dark:border-zinc-800">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Link
-            href={`/msg/${tpe}/${robotId}`}
+            href={`/msg/${chat.tpe}/${chat.robotId}`}
             className="flex size-9 shrink-0 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             title="新会话"
             aria-label="新会话"
@@ -100,7 +109,7 @@ export default function ChatPage({ params }: { params: Promise<Params> }) {
         <div className="flex min-w-0 flex-1" aria-hidden />
       </header>
       <CopilotKit
-        runtimeUrl={`/api/copilotkit/${tpe}/${robotId}`}
+        runtimeUrl={`/api/copilotkit/${chat.tpe}/${chat.robotId}`}
         enableInspector={false}
       >
         <div className="flex min-h-0 flex-1 flex-col">

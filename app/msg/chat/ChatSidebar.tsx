@@ -135,7 +135,7 @@ export function ChatSidebar({ tpe, robotId }: ChatSidebarProps) {
                 ) : (
                   <ul className="flex min-w-0 flex-col gap-0.5">
                     {chats.map((chat) => {
-                      const href = `/msg/${tpe}/${robotId}/${chat.id}`;
+                      const href = `/msg/chat/${chat.id}`;
                       const chatTitle = getChatTitle(chat);
                       const isActive = pathname === href;
                       return (

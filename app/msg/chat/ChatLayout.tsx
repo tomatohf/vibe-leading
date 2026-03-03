@@ -1,12 +1,14 @@
+"use client";
+
 import { ChatSidebar } from "./ChatSidebar";
 
 interface LayoutProps {
   children: React.ReactNode;
-  params: Promise<{ tpe: string; robotId: string }>;
+  params: { tpe: string; robotId: string };
 }
 
-export default async function MsgAgentLayout({ children, params }: LayoutProps) {
-  const { tpe, robotId } = await params;
+export default function ChatLayout({ children, params }: LayoutProps) {
+  const { tpe, robotId } = params;
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] min-h-0">
