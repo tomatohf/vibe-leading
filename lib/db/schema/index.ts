@@ -1,10 +1,14 @@
 import {
   mysqlTable,
   varchar,
+  boolean,
   timestamp,
   mysqlEnum,
   json,
 } from "drizzle-orm/mysql-core";
+
+import { type BaseEvent, type RunAgentInput } from "@ag-ui/client";
+
 
 /**
  * 业务表：agents
@@ -41,13 +45,18 @@ export type NewAgent = typeof agents.$inferInsert;
  * - messages：消息列表（JSON 数组）
  */
 export const chatTpeEnum = ["agent", "crew"] as const;
+type ChatMessage = {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
 
 export const chats = mysqlTable("chats", {
+  // thread_id
   id: varchar("id", { length: 36 }).primaryKey(),
 
   tpe: mysqlEnum("tpe", chatTpeEnum).notNull(),
   robotId: varchar("robot_id", { length: 36 }).notNull(),
-  messages: json("messages").$type<unknown[]>().notNull(),
+  messages: json("messages").$type<ChatMessage[]>().notNull(),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
@@ -58,3 +67,25 @@ export const chats = mysqlTable("chats", {
 
 export type Chat = typeof chats.$inferSelect;
 export type NewChat = typeof chats.$inferInsert;
+
+/**
+ * 业务表：chat_runs
+ */
+export const chatRuns = mysqlTable("chat_runs", {
+  // run_id
+  id: varchar("id", { length: 36 }).primaryKey(),
+
+  // thread_id
+  chatId: varchar("chat_id", { length: 36 }).notNull(),
+  events: json("events").$type<BaseEvent[]>().notNull(),
+  input: json("input").$type<RunAgentInput>().notNull(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type ChatRun = typeof chatRuns.$inferSelect;
+export type NewChatRun = typeof chatRuns.$inferInsert;

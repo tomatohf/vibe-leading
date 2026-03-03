@@ -15,6 +15,13 @@
       "when": 1772168431922,
       "tag": "0001_aromatic_korg",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772515388058,
+      "tag": "0002_condemned_puma",
+      "breakpoints": true
     }
   ]
 }
