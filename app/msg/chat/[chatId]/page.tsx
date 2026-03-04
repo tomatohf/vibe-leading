@@ -14,7 +14,7 @@ interface Params {
   chatId: string;
 }
 
-type Robot = {
+export type Robot = {
   tpe: string;
   id: string;
 

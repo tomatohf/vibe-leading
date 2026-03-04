@@ -32,7 +32,7 @@ function getChatTitle(chat: ChatItem): string {
   return `${y}-${m}-${d} ${h}:${min}`;
 }
 
-function TpeIcon({ tpe }: { tpe: string }) {
+export function TpeIcon({ tpe }: { tpe: string }) {
   if (tpe === "crew") {
     return (
       <svg
