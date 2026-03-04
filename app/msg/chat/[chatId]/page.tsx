@@ -178,6 +178,9 @@ function Chat({robot, chat}: {
     >
       <CopilotChat
         threadId={chat?.id}
+        chatView={{
+          input: { addMenuButton: () => null },
+        }}
         labels={{
           modalHeaderTitle: robot?.name,
           chatInputPlaceholder: robot ? `给 ${robot.name} 发送消息` : "发送消息",
