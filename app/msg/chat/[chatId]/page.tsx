@@ -147,6 +147,7 @@ function Chat({robot, chat}: {
   chat: Chat | null;
 }) {
   const { agent } = useAgent();
+  const [contentReady, setContentReady] = useState(false);
 
   React.useEffect(() => {
     const { unsubscribe } = agent.subscribe({
@@ -163,22 +164,29 @@ function Chat({robot, chat}: {
             ag.runAgent();
           }
         }
+
+        setContentReady(true);
       },
     });
     return unsubscribe;
   }, [agent, chat?.messages]);
 
   return (
-    <CopilotChat
-      threadId={chat?.id}
-      labels={{
-        modalHeaderTitle: robot?.name,
-        chatInputPlaceholder: robot ? `给 ${robot.name} 发送消息` : "发送消息",
-        userMessageToolbarCopyMessageLabel: "复制",
-        assistantMessageToolbarCopyMessageLabel: "复制",
-        chatDisclaimerText: "",
-        welcomeMessageText: ""
-      }}
-    />
+    <div
+      className="flex min-h-0 flex-1 flex-col transition-opacity duration-300 ease-out"
+      style={{ opacity: contentReady ? 1 : 0 }}
+    >
+      <CopilotChat
+        threadId={chat?.id}
+        labels={{
+          modalHeaderTitle: robot?.name,
+          chatInputPlaceholder: robot ? `给 ${robot.name} 发送消息` : "发送消息",
+          userMessageToolbarCopyMessageLabel: "复制",
+          assistantMessageToolbarCopyMessageLabel: "复制",
+          chatDisclaimerText: "",
+          welcomeMessageText: ""
+        }}
+      />
+    </div>
   );
 }
