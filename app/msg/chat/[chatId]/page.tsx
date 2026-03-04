@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import "@copilotkit/react-core/v2/styles.css";
 import { CopilotKit } from "@copilotkit/react-core";
-import { CopilotChat, useAgent, AgentSubscriberParams, Message } from "@copilotkit/react-core/v2";
+import { CopilotChat, useAgent, AgentSubscriberParams } from "@copilotkit/react-core/v2";
 import ChatLayout from '@/app/msg/chat/ChatLayout'
 import type { Chat } from "@/lib/db/schema";
 
@@ -150,13 +150,23 @@ function Chat({robot, chat}: {
 
   React.useEffect(() => {
     const { unsubscribe } = agent.subscribe({
-      onNewMessage(params: { message: Message } & AgentSubscriberParams) {
-        void agent.threadId;
-        void params.messages;
+      onRunFinalized(params: AgentSubscriberParams) {
+        const ag = params.agent;
+        // NO existing messages, add chat messages and run agent
+        if (ag.messages.length <= 0) {
+          const initialMessages = chat?.messages?.map((m) => ({
+            ...m,
+            id: crypto.randomUUID(),
+          })) ?? [];
+          if (initialMessages.length > 0) {
+            ag.addMessages(initialMessages);
+            ag.runAgent();
+          }
+        }
       },
     });
     return unsubscribe;
-  }, [agent]);
+  }, [agent, chat?.messages]);
 
   return (
     <CopilotChat
