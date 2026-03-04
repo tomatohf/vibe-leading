@@ -12,6 +12,7 @@ import {
   RunAgentInput,
   EventType,
   RunStartedEvent,
+  RunFinishedEvent,
   compactEvents,
 } from "@ag-ui/client";
 import { eq, asc } from 'drizzle-orm';
@@ -166,19 +167,27 @@ export class DBAgentRunner extends AgentRunner {
   private async _connect(request: AgentRunnerConnectRequest): Promise<Observable<BaseEvent>> {
     // Load historic runs from database
     const historicRuns = await this.getHistoricRuns(request.threadId);
-    // Collect all historic events from database
-    const allHistoricEvents: BaseEvent[] = [];
-    for (const run of historicRuns) {
-      allHistoricEvents.push(...run.events);
-    }
-    // Compact all events together before emitting
-    const compactedEvents = compactEvents(allHistoricEvents);
-
-    // Emit compacted historic events
     const connectionSubject = new ReplaySubject<BaseEvent>(Infinity);
-    for (const event of compactedEvents) {
-      // Ignore run error events
-      if (event.type !== EventType.RUN_ERROR) {
+
+    for (const run of historicRuns) {
+      const emitEvents: BaseEvent[] = [];
+
+      const compactedEvents = compactEvents(run.events);
+      for (const event of compactedEvents) {
+        // Ignore run error events
+        if (event.type !== EventType.RUN_ERROR) {
+          emitEvents.push(event);
+          connectionSubject.next(event);
+        }
+      }
+
+      const appendedEvents = finalizeRunEvents(emitEvents, { stopRequested: true });
+      for (const event of appendedEvents) {
+        if (event.type === EventType.RUN_FINISHED) {
+          const runFinishedEvent = event as RunFinishedEvent;
+          runFinishedEvent.threadId = run.chatId;
+          runFinishedEvent.runId = run.id;
+        }
         connectionSubject.next(event);
       }
     }
