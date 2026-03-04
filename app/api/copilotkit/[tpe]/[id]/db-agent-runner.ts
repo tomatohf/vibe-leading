@@ -177,7 +177,10 @@ export class DBAgentRunner extends AgentRunner {
     // Emit compacted historic events
     const connectionSubject = new ReplaySubject<BaseEvent>(Infinity);
     for (const event of compactedEvents) {
-      connectionSubject.next(event);
+      // Ignore run error events
+      if (event.type !== EventType.RUN_ERROR) {
+        connectionSubject.next(event);
+      }
     }
     // complete after historic events
     connectionSubject.complete();
