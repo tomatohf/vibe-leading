@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, MessageSquare } from "lucide-react";
-import { type BaseEvent } from "@ag-ui/client";
+import { Loader2 } from "lucide-react";
+import { type BaseEvent, EventType, type TextMessageContentEvent } from "@ag-ui/client";
 import { type ChatMessage } from "@/lib/db/schema";
 import { type Robot } from "@/app/msg/chat/[chatId]/page";
 import { TpeIcon } from "@/app/msg/chat/ChatSidebar";
@@ -26,8 +26,15 @@ function chatTitle(messages: MsgListItem["chat_messages"]): string {
   return first?.content?.trim().slice(0, 80) || "新对话";
 }
 
-function runTitle(events: MsgListItem["run_events"]): string {
-  return JSON.stringify(events);
+function runTitle(events: BaseEvent[]): string {
+  const deltas: string[] = [];
+  for (const event of events) {
+    if (event.type === EventType.TEXT_MESSAGE_CONTENT) {
+      const textMessageContentEvent = event as TextMessageContentEvent;
+      deltas.push(textMessageContentEvent.delta);
+    }
+  }
+  return deltas.join('');
 }
 
 function formatDate(iso: string): string {
