@@ -1,7 +1,6 @@
 import {
   mysqlTable,
   varchar,
-  boolean,
   timestamp,
   mysqlEnum,
   json,
@@ -45,7 +44,7 @@ export type NewAgent = typeof agents.$inferInsert;
  * - messages：消息列表（JSON 数组）
  */
 export const chatTpeEnum = ["agent", "crew"] as const;
-type ChatMessage = {
+export type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
 }
