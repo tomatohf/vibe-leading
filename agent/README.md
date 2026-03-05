@@ -17,27 +17,6 @@ Next, navigate to your project directory and install the dependencies:
 (Optional) Lock the dependencies and install them by using the CLI command:
 ```bash
 crewai install
-```
-### Customizing
-
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/agent/config/agents.yaml` to define your agents
-- Modify `src/agent/config/tasks.yaml` to define your tasks
-- Modify `src/agent/crew.py` to add your own logic, tools and specific args
-- Modify `src/agent/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
-
-```bash
-$ crewai run
-```
-
-This command initializes the agent Crew, assembling the agents and assigning them tasks as defined in your configuration.
-
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
 
 ## Understanding Your Crew
 
