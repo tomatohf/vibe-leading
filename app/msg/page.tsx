@@ -34,7 +34,7 @@ function runTitle(events: BaseEvent[]): string {
       deltas.push(textMessageContentEvent.delta);
     }
   }
-  return deltas.join('');
+  return deltas.join('').trim().slice(0, 80);
 }
 
 function formatDate(iso: string): string {
