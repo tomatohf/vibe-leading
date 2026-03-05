@@ -40,6 +40,7 @@ function runTitle(events: BaseEvent[]): string {
 function formatDate(iso: string): string {
   const d = new Date(iso);
   const now = new Date();
+  if (Number.isNaN(d.getTime())) return "—";
   const sameDay =
     d.getDate() === now.getDate() &&
     d.getMonth() === now.getMonth() &&
@@ -47,9 +48,23 @@ function formatDate(iso: string): string {
   if (sameDay) {
     return d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
   }
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / (24 * 60 * 60 * 1000));
-  if (diffDays === 1) return "昨天";
-  if (diffDays < 7) return `${diffDays} 天前`;
+  const startOfDay = (date: Date) => {
+    const t = new Date(date);
+    t.setHours(0, 0, 0, 0);
+    return t;
+  };
+  const diffDays = Math.floor(
+    (startOfDay(now).getTime() - startOfDay(d).getTime()) / (24 * 60 * 60 * 1000)
+  );
+  if (diffDays > 0) {
+    if (diffDays === 1) return "昨天";
+    if (diffDays < 7) return `${diffDays} 天前`;
+    return d.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
+  }
+  if (diffDays < 0) {
+    if (diffDays === -1) return "明天";
+    if (diffDays > -7) return `${-diffDays} 天后`;
+  }
   return d.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
 }
 
