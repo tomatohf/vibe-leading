@@ -62,19 +62,31 @@ export default function MsgPage() {
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all([
-      fetch("/api/msg/list").then((r) => r.json()),
-      fetch("/api/org/agents").then((r) => r.json()),
-    ])
-      .then(([listRes, agentsRes]) => {
+    fetch("/api/msg/list")
+      .then((r) => r.json())
+      .then((listRes) => {
         if (cancelled) return;
         if (!listRes?.ok) {
           setError(listRes?.error ?? "加载消息列表失败");
+          setLoading(false);
           return;
         }
         const data = listRes.data ?? [];
-        setList(Array.isArray(data) ? data : []);
+        const listData = Array.isArray(data) ? data : [];
+        setList(listData);
 
+        const agentIds = [...new Set(listData.map((item: MsgListItem) => item.robot_id).filter(Boolean))];
+        if (agentIds.length === 0) {
+          setRobots({});
+          setLoading(false);
+          return;
+        }
+
+        const idsQuery = agentIds.join(",");
+        return fetch(`/api/org/agents?ids=${encodeURIComponent(idsQuery)}`).then((r) => r.json());
+      })
+      .then((agentsRes) => {
+        if (cancelled || agentsRes === undefined) return;
         const agentList = agentsRes?.ok ? agentsRes.data ?? [] : [];
         const map: RobotMap = {};
         for (const a of agentList) {

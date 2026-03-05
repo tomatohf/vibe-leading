@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { agents } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const idsParam = searchParams.get("ids");
+    const ids = idsParam
+      ? idsParam.split(",").map((s) => s.trim()).filter(Boolean)
+      : null;
+
+    if (ids != null && ids.length > 0) {
+      const rows = await db
+        .select()
+        .from(agents)
+        .where(inArray(agents.id, ids))
+        .orderBy(agents.createdAt);
+      return NextResponse.json({ ok: true, data: rows });
+    }
+
     const rows = await db.select().from(agents).orderBy(agents.createdAt);
     return NextResponse.json({ ok: true, data: rows });
   } catch (error) {
