@@ -4,6 +4,7 @@ import {
   timestamp,
   mysqlEnum,
   json,
+  boolean,
 } from "drizzle-orm/mysql-core";
 
 import { type BaseEvent, type RunAgentInput } from "@ag-ui/client";
@@ -36,6 +37,45 @@ export const agents = mysqlTable("agents", {
 
 export type Agent = typeof agents.$inferSelect;
 export type NewAgent = typeof agents.$inferInsert;
+
+export const crews = mysqlTable("crews", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+
+  role: varchar("name", { length: 64 }).notNull().unique(),
+  managerId: varchar("manager_id", { length: 36 }),
+  // process=Process.hierarchical if managerId else Process.sequential
+  // allow_delegation=True if (agent.id == managerId) else False
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type Crew = typeof crews.$inferSelect;
+export type NewCrew = typeof crews.$inferInsert;
+
+export const tasks = mysqlTable("tasks", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+
+  crewId: varchar("crew_id", { length: 36 }).notNull(),
+  description: varchar("description", { length: 4096 }).notNull(),
+  expectedOutput: varchar("expected_output", { length: 512 }).notNull(),
+
+  agentId: varchar("agent_id", { length: 36 }),
+  asyncExecution: boolean("async_execution").default(false),
+  contexts: json("contexts").$type<string[]>().default([]),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type Task = typeof tasks.$inferSelect;
+export type NewTask = typeof tasks.$inferInsert;
 
 /**
  * 业务表：chats
