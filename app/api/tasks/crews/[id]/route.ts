@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { crews, tasks } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 type RouteParams = {
   params: Promise<{ id: string }>;
@@ -84,6 +84,62 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
           { status: 400 }
         );
       }
+      if (t.contexts !== undefined && !Array.isArray(t.contexts)) {
+        return NextResponse.json(
+          { ok: false, error: `子任务 ${i + 1} 的 contexts 必须是数组` },
+          { status: 400 }
+        );
+      }
+    }
+
+    const existingTaskRows = await db
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(eq(tasks.crewId, id));
+    const existingIds = new Set(existingTaskRows.map((r) => r.id));
+
+    type TaskPayload = {
+      id?: string;
+      description: string;
+      expectedOutput: string;
+      agentId?: string;
+      asyncExecution?: boolean;
+      contexts?: string[];
+    };
+    const finalIds: string[] = [];
+    const taskPayloadsWithId: { payload: TaskPayload; taskId: string }[] = [];
+    for (let i = 0; i < taskList.length; i++) {
+      const t = taskList[i] as TaskPayload;
+      const taskId =
+        t.id && existingIds.has(t.id) ? t.id : crypto.randomUUID();
+      finalIds.push(taskId);
+      taskPayloadsWithId.push({ payload: t, taskId });
+    }
+    const validIdSet = new Set(finalIds);
+
+    for (let i = 0; i < taskPayloadsWithId.length; i++) {
+      const { payload: t, taskId } = taskPayloadsWithId[i];
+      const ctx = (t.contexts ?? []) as string[];
+      for (const cid of ctx) {
+        if (!validIdSet.has(cid)) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: `子任务 ${i + 1} 的 contexts 只能引用本团队内的其他子任务`,
+            },
+            { status: 400 }
+          );
+        }
+        if (cid === taskId) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: `子任务 ${i + 1} 的 contexts 不能引用自身`,
+            },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     await db
@@ -91,28 +147,36 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
       .set({ name: name.trim(), managerId: managerId || null })
       .where(eq(crews.id, id));
 
-    // Delete old tasks, then re-insert
-    await db.delete(tasks).where(eq(tasks.crewId, id));
+    const toDelete = existingIds.size > 0
+      ? Array.from(existingIds).filter((eid) => !finalIds.includes(eid))
+      : [];
+    if (toDelete.length > 0) {
+      await db.delete(tasks).where(inArray(tasks.id, toDelete));
+    }
 
-    const taskValues = taskList.map(
-      (t: {
-        description: string;
-        expectedOutput: string;
-        agentId?: string;
-        asyncExecution?: boolean;
-        contexts?: string[];
-      }) => ({
-        id: crypto.randomUUID(),
+    for (const { payload: t, taskId } of taskPayloadsWithId) {
+      const ctx = (t.contexts ?? []) as string[];
+      const row = {
+        id: taskId,
         crewId: id,
         description: t.description.trim(),
         expectedOutput: t.expectedOutput.trim(),
         agentId: t.agentId || null,
         asyncExecution: t.asyncExecution ?? false,
-        contexts: t.contexts ?? [],
-      })
-    );
-
-    await db.insert(tasks).values(taskValues);
+        contexts: ctx,
+      };
+      if (existingIds.has(taskId)) {
+        await db.update(tasks).set({
+          description: row.description,
+          expectedOutput: row.expectedOutput,
+          agentId: row.agentId,
+          asyncExecution: row.asyncExecution,
+          contexts: row.contexts,
+        }).where(eq(tasks.id, taskId));
+      } else {
+        await db.insert(tasks).values(row);
+      }
+    }
 
     const updated = await db.query.crews.findFirst({
       where: eq(crews.id, id),

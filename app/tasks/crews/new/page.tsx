@@ -14,6 +14,7 @@ type TaskForm = {
   expectedOutput: string;
   agentId: string;
   asyncExecution: boolean;
+  contexts: string[];
 };
 
 function createEmptyTask(): TaskForm {
@@ -23,6 +24,7 @@ function createEmptyTask(): TaskForm {
     expectedOutput: "",
     agentId: "",
     asyncExecution: false,
+    contexts: [],
   };
 }
 
@@ -79,10 +81,12 @@ export default function NewCrewPage() {
         name: name.trim(),
         managerId: managerId || null,
         tasks: taskForms.map((t) => ({
+          key: t.key,
           description: t.description.trim(),
           expectedOutput: t.expectedOutput.trim(),
           agentId: t.agentId || null,
           asyncExecution: t.asyncExecution,
+          contexts: t.contexts,
         })),
       };
 
@@ -257,6 +261,7 @@ export default function NewCrewPage() {
               </div>
 
               <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                异步执行
                 <input
                   type="checkbox"
                   className="rounded border-zinc-300 dark:border-zinc-600"
@@ -265,8 +270,44 @@ export default function NewCrewPage() {
                     updateTask(task.key, "asyncExecution", e.target.checked)
                   }
                 />
-                异步执行
               </label>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                  依赖的子任务（可选）
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {taskForms
+                    .filter((t) => t.key !== task.key)
+                    .map((other, oidx) => {
+                      const isChecked = task.contexts.includes(other.key);
+                      return (
+                        <label
+                          key={other.key}
+                          className="flex items-center gap-1.5 rounded border border-zinc-200 px-2 py-1 text-xs dark:border-zinc-700"
+                        >
+                          <input
+                            type="checkbox"
+                            className="rounded border-zinc-300 dark:border-zinc-600"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const next = e.target.checked
+                                ? [...task.contexts, other.key]
+                                : task.contexts.filter((k) => k !== other.key);
+                              updateTask(task.key, "contexts", next);
+                            }}
+                          />
+                          子任务 {taskForms.findIndex((x) => x.key === other.key) + 1}
+                        </label>
+                      );
+                    })}
+                  {taskForms.filter((t) => t.key !== task.key).length === 0 && (
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      暂无其他子任务可选
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </section>

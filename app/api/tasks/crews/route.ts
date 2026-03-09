@@ -69,9 +69,52 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+      if (t.contexts !== undefined && !Array.isArray(t.contexts)) {
+        return NextResponse.json(
+          { ok: false, error: `子任务 ${i + 1} 的 contexts 必须是数组` },
+          { status: 400 }
+        );
+      }
     }
 
     const crewId = crypto.randomUUID();
+    const taskIds = taskList.map(() => crypto.randomUUID());
+    const keyToId = new Map<string, string>();
+    taskList.forEach((t: { key?: string }, i: number) => {
+      if (t.key) keyToId.set(t.key, taskIds[i]);
+    });
+
+    for (let i = 0; i < taskList.length; i++) {
+      const t = taskList[i];
+      const ctx = (t.contexts ?? []) as string[];
+      for (const k of ctx) {
+        if (!keyToId.has(k)) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: `子任务 ${i + 1} 的 contexts 只能引用本团队内的其他子任务`,
+            },
+            { status: 400 }
+          );
+        }
+        if (keyToId.get(k) === taskIds[i]) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: `子任务 ${i + 1} 的 contexts 不能引用自身`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    const resolvedContexts = taskList.map((t: { key?: string; contexts?: string[] }, i: number) => {
+      const ctx = (t.contexts ?? []) as string[];
+      return ctx
+        .map((k) => keyToId.get(k))
+        .filter((id): id is string => id != null && id !== taskIds[i]);
+    });
 
     await db.insert(crews).values({
       id: crewId,
@@ -81,19 +124,21 @@ export async function POST(req: NextRequest) {
 
     const taskValues = taskList.map(
       (t: {
+        key?: string;
         description: string;
         expectedOutput: string;
         agentId?: string;
         asyncExecution?: boolean;
         contexts?: string[];
-      }) => ({
-        id: crypto.randomUUID(),
+      },
+      i: number) => ({
+        id: taskIds[i],
         crewId,
         description: t.description.trim(),
         expectedOutput: t.expectedOutput.trim(),
         agentId: t.agentId || null,
         asyncExecution: t.asyncExecution ?? false,
-        contexts: t.contexts ?? [],
+        contexts: resolvedContexts[i] ?? [],
       })
     );
 

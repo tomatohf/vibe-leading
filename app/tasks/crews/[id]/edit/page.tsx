@@ -10,19 +10,23 @@ type Agent = {
 
 type TaskForm = {
   key: string;
+  id: string;
   description: string;
   expectedOutput: string;
   agentId: string;
   asyncExecution: boolean;
+  contexts: string[];
 };
 
 function createEmptyTask(): TaskForm {
   return {
     key: crypto.randomUUID(),
+    id: "",
     description: "",
     expectedOutput: "",
     agentId: "",
     asyncExecution: false,
+    contexts: [],
   };
 }
 
@@ -70,16 +74,20 @@ export default function EditCrewPage({
           crew.tasks.length > 0
             ? crew.tasks.map(
                 (t: {
+                  id: string;
                   description: string;
                   expectedOutput: string;
                   agentId: string | null;
                   asyncExecution: boolean | null;
+                  contexts: string[] | null;
                 }) => ({
                   key: crypto.randomUUID(),
+                  id: t.id,
                   description: t.description,
                   expectedOutput: t.expectedOutput,
                   agentId: t.agentId ?? "",
                   asyncExecution: t.asyncExecution ?? false,
+                  contexts: Array.isArray(t.contexts) ? t.contexts : [],
                 })
               )
             : [createEmptyTask()]
@@ -125,10 +133,12 @@ export default function EditCrewPage({
         name: name.trim(),
         managerId: managerId || null,
         tasks: taskForms.map((t) => ({
+          id: t.id || undefined,
           description: t.description.trim(),
           expectedOutput: t.expectedOutput.trim(),
           agentId: t.agentId || null,
           asyncExecution: t.asyncExecution,
+          contexts: t.contexts,
         })),
       };
 
@@ -311,6 +321,7 @@ export default function EditCrewPage({
               </div>
 
               <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                异步执行
                 <input
                   type="checkbox"
                   className="rounded border-zinc-300 dark:border-zinc-600"
@@ -319,8 +330,49 @@ export default function EditCrewPage({
                     updateTask(task.key, "asyncExecution", e.target.checked)
                   }
                 />
-                异步执行
               </label>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-zinc-600 dark:text-zinc-300">
+                  依赖的子任务（可选）
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {taskForms
+                    .filter(
+                      (t) =>
+                        t.key !== task.key &&
+                        t.id
+                    )
+                    .map((other) => {
+                      const isChecked = task.contexts.includes(other.id);
+                      return (
+                        <label
+                          key={other.key}
+                          className="flex items-center gap-1.5 rounded border border-zinc-200 px-2 py-1 text-xs dark:border-zinc-700"
+                        >
+                          <input
+                            type="checkbox"
+                            className="rounded border-zinc-300 dark:border-zinc-600"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const next = e.target.checked
+                                ? [...task.contexts, other.id]
+                                : task.contexts.filter((cid) => cid !== other.id);
+                              updateTask(task.key, "contexts", next);
+                            }}
+                          />
+                          子任务 {taskForms.findIndex((x) => x.key === other.key) + 1}
+                        </label>
+                      );
+                    })}
+                  {taskForms.filter((t) => t.key !== task.key && t.id).length ===
+                    0 && (
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                      暂无其他子任务可选
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </section>
