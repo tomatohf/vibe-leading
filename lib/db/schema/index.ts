@@ -41,7 +41,7 @@ export type NewAgent = typeof agents.$inferInsert;
 export const crews = mysqlTable("crews", {
   id: varchar("id", { length: 36 }).primaryKey(),
 
-  role: varchar("name", { length: 64 }).notNull().unique(),
+  name: varchar("name", { length: 64 }).notNull().unique(),
   managerId: varchar("manager_id", { length: 36 }),
   // process=Process.hierarchical if managerId else Process.sequential
   // allow_delegation=True if (agent.id == managerId) else False
